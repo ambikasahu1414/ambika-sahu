@@ -1,0 +1,85 @@
+ Group Chat Summarizer
+# Author: ambika sahu
+# Regd. No: 2402090112
+# Branch: Mechanical Engineering
+
+from collections import Counter
+import re
+
+def load_chat(file_path):
+    """Load chat file content."""
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return f.readlines()
+
+
+def extract_messages(chat_lines):
+    """Extract sender and message content."""
+    messages = []
+    for line in chat_lines:
+        # Corrected regex and group capture
+        match = re.match(r'^\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{2}\s?(AM|PM|am|pm)?\s-\s([^:]+):\s(.*)', line)
+        if match:
+            _, sender, message = match.groups()
+            messages.append((sender.strip(), message.strip()))
+    return messages
+
+
+def summarize_chat(messages):
+    """Summarize chat statistics and keywords."""
+    senders = [msg[0] for msg in messages]
+    total_messages = len(messages)
+    sender_count = Counter(senders)
+
+    # Top 5 active users
+    top_users = sender_count.most_common(5)
+
+    # Common words
+    words = " ".join([msg[1] for msg in messages]).lower()
+    word_list = re.findall(r'\b\w+\b', words)
+    common_words = [
+        word for word in word_list
+        if word not in ["the", "and", "to", "a", "is", "of", "in", "for", "i", "you", "it", "on", "this", "that"]
+    ]
+    top_words = Counter(common_words).most_common(10)
+
+    return total_messages, top_users, top_words
+
+
+def main():
+    print("===== GROUP CHAT SUMMARIZER =====")
+    file_path = input("Enter chat file name (e.g., chat.txt): ")
+
+    try:
+        chat_lines = load_chat(file_path)
+        messages = extract_messages(chat_lines)
+
+        if not messages:
+            print("No messages found. Make sure the chat is exported in text format.")
+            return
+
+        total_messages, top_users, top_words = summarize_chat(messages)
+
+        print("\n📊 Chat Summary:")
+        print(f"Total Messages: {total_messages}")
+
+        print("\nTop Active Users:")
+        for user, count in top_users:
+            print(f" - {user}: {count} messages")
+
+        print("\nMost Common Words:")
+        for word, freq in top_words:
+            print(f" - {word}: {freq} times")
+
+        print("\n💡 Overall Summary:")
+        print("This group had an active discussion with topics centered around the most frequent words above.")
+        print("You can modify stopwords or add sentiment analysis for deeper insights.")
+
+    except FileNotFoundError:
+        print("Error: File not found. Please check your file path.")
+    except Exception as e:
+        print("An error occurred:", e)
+
+
+# Run the program correctly
+if __name__ == "__main__":
+    main()
